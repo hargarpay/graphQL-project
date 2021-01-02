@@ -1,31 +1,31 @@
-import { BlogType } from "../types/Blog";
+import { ContextType } from "../types/Context";
 import { PostType } from "../types/Post";
 
 export const Query = {
-    users(parent: any, args: any, ctx: BlogType, info: any){
+    users(parent: any, args: any, ctx: ContextType, info: any){
         if (args.email){
-            return ctx.users.filter((u) => u.email.toLowerCase().indexOf(args.email.toLowerCase()) > -1);
+            return ctx.db.users.filter((u) => u.email.toLowerCase().indexOf(args.email.toLowerCase()) > -1);
         }
 
         if (args.name){
-            return ctx.users.filter((u) => u.name.toLowerCase() === args.name.toLowerCase());
+            return ctx.db.users.filter((u) => u.name.toLowerCase() === args.name.toLowerCase());
         }
 
-        return ctx.users;
+        return ctx.db.users;
 
     },
-    posts(parent: any, args: any, ctx: BlogType, info: any): PostType[]{
+    posts(parent: any, args: any, ctx: ContextType, info: any): PostType[]{
         if(args.query){
             const q2Lower = args.query.toLowerCase();
-            return ctx.posts.filter((p) => (
+            return ctx.db.posts.filter((p) => (
                 p.body.toLowerCase().includes(q2Lower) ||
                 p.title.toLowerCase().includes(q2Lower)
             ))
         }
-        return ctx.posts;
+        return ctx.db.posts;
     },
-    comments(parent: any, args: any, ctx: BlogType, info: any){
-        return ctx.comments
+    comments(parent: any, args: any, ctx: ContextType, info: any){
+        return ctx.db.comments
     },
     me(){
         return {
