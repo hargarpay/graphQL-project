@@ -6,6 +6,7 @@ type User {
     posts: [Post!]!
     comments: [Comment!]!
 }
+
 type Post {
     id: ID!
     title: String!
@@ -14,12 +15,30 @@ type Post {
     author: User!
     comments: [Comment!]!
 }
+
 type Comment {
     id: ID!,
     text: String!
     user: User!
     post: Post!
 }
+
+enum MutationType {
+    CREATED
+    UPDATED
+    DELETED
+}
+
+type PostSubscriptionPayload {
+    mutation: MutationType!
+    data: Post!
+}
+
+type CommentSubscriptionPayload {
+    mutation: MutationType!
+    data: Comment!
+}
+
 type Query {
     users(email: String, name: String): [User!]!
     posts(query: String): [Post!]!
@@ -42,8 +61,8 @@ type Mutation {
 }
 
 type Subscription {
-    count: Int!
-    comment(post: ID!): Comment!
+    comment(post: ID!): CommentSubscriptionPayload!
+    post: PostSubscriptionPayload!
 }
 
 input CreateUserInput {

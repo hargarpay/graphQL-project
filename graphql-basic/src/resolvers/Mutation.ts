@@ -37,6 +37,14 @@ export const Mutation = {
         } 
 
         ctx.db.posts.push(post);
+        if(post.published){
+            ctx.pubsub.publish("post", {
+                post: {
+                    mutation: "CREATED",
+                    data: post
+                }
+            })
+        }
         return post;
     },
     createComment(parent: any, args: any, ctx: ContextType, info: any){
@@ -60,7 +68,10 @@ export const Mutation = {
 
         ctx.db.comments.push(comment);
         ctx.pubsub.publish(`comment:${args.comment.post}`, {
-            comment
+            comment: {
+                mutation: "CREATED",
+                data: comment
+            }
         })
         return comment;
     },
@@ -71,6 +82,13 @@ export const Mutation = {
         }
 
         ctx.db.comments = ctx.db.comments.filter(c => c.id !== args.id);
+
+        ctx.pubsub.publish(`comment:${args.comment.post}`, {
+            comment: {
+                mutation: "DELETED",
+                data: comment
+            }
+        })
         return comment;
     },
 
@@ -102,6 +120,8 @@ export const Mutation = {
     updatePost(parent: any, args: any, ctx: ContextType, info: any){
         const post = ctx.db.posts.find(p => p.id === args.id);
 
+        const previousPost = {...post};
+
         if(!post) throw new Error("Post does not exist");
 
         if(typeof args.post.title === "string"){
@@ -114,6 +134,29 @@ export const Mutation = {
 
         if(typeof args.post.published === "boolean"){
             post.published = args.post.published;
+
+            if(!previousPost.published && post.published){
+                ctx.pubsub.publish("post", {
+                    post: {
+                        mutation: "CREATED",
+                        data: post
+                    }
+                })
+            }else if (previousPost.published && post.published){
+                ctx.pubsub.publish("post", {
+                    post: {
+                        mutation: "DELETED",
+                        data: post
+                    }
+                })
+            }
+        }else if (previousPost.published) {
+            ctx.pubsub.publish("post", {
+                post: {
+                    mutation: "UPDATED",
+                    data: post
+                }
+            })
         }
 
         return post;
@@ -127,6 +170,12 @@ export const Mutation = {
             comment.text = args.comment.text;
         }
 
+        ctx.pubsub.publish(`comment:${args.comment.post}`, {
+            comment: {
+                mutation: "UPDATED",
+                data: comment
+            }
+        })
         return comment;
     },
     deleteUser(parent: any, args: any, ctx: ContextType, info: any){
@@ -154,6 +203,13 @@ export const Mutation = {
         }
         ctx.db.comments = ctx.db.comments.filter(c => c.post !== args.id);
         ctx.db.posts = ctx.db.posts.filter(p => p.id !== args.id);
+
+        ctx.pubsub.publish("post", {
+            post: {
+                mutation: "DELETED",
+                data: post
+            }
+        })
 
         return post;
 
